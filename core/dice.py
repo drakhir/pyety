@@ -1,121 +1,118 @@
 # -*- coding: utf-8 -*-
 
+import random
 import logging
+from os import linesep
 
 logging.basicConfig(
-                    level=logging.INFO,
-                    format="%(asctime)s %(name)s %(levelname)-8s %(message)s",
-                    datefmt="%Y-%m-%d %H:%M:%S"
+    level=logging.INFO,
+    format="%(asctime)s %(name)s %(levelname)-8s %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
 )
 logger = logging.getLogger(__name__)
-
-import random
-from os import urandom
 
 
 class Dice(object):
     """Simulate a dice roll"""
 
-    def __init__(self, num=random.randint(1, 256)):
+    def __init__(self):
         try:  # Initialize random seed
-            random.seed(urandom(num))
+            self._r = random.SystemRandom()
         except NotImplementedError:  # Use the default randomization if no random number generator available
             logger.warning("System random number generator unavailable. Using defaults.")
             pass
-        # Initialize the dice roll history chain
-        self.roll_history = []
+        # Initialize the dice roll history sequence
+        self.history = []
         self.sides = []
+        self.roll_mods = []
 
     def __len__(self):
-        return len(self.roll_history)
+        return len(self.history)
 
     def __str__(self):
-        return str(self.total)
+        strrls = ""
+        for n in range(len(self.history)):
+            strrls = strrls + str(self.total(n - 1)) + linesep
+        return strrls.rstrip()
 
     @property
-    def all(self):
-        if not self.roll_history:
+    def rolls(self):
+        if not self.history:
             logger.warning("The roll history is empty.")
-            return []
+            all_rolls = []
         else:
-            return self.roll_history
+            all_rolls = self.history
+        return all_rolls
 
     @property
     def last(self):
         try:
-            return self.roll_history[-1]
+            roll = self.history[-1]
         except IndexError:
             logger.warning("No last roll data found")
-            return []
+            roll = []
+        return roll
 
-    @property
-    def total(self):
-        return sum(self.last)
-
-    def tally(self, index):
-        try:
-            return sum(self.roll_history[index])
-        except IndexError:
-            logger.error("The dice roll_history index is out of range.")
-            return []
-
-    def rollHistoryAppend(self, dice):
-        self.roll_history.append(dice)
-
-    def rollHistoryEdit(self, index, dice):
-        self.roll_history[index] = dice
-
-    def rollHistoryClear(self):
-        self.roll_history = []
-        self.sides = []
-
-    def discard(self, num, index=None, reverse=False):
-        if index is None:
-            dice = self.last
-        else:
-            dice = self.getRoll(index)
+    def discard(self, num, index=-1, reverse=False):
+        dice = self.getRoll(index)
         dice.sort()
         if reverse:
             dice.reverse()
         dice = dice[num:]
-        self.rollHistoryEdit(index, dice)
+        self.historyEdit(index, dice)
         return dice
 
     def getRoll(self, index):
-        h = list(self.roll_history)
-        if index >= 0:
-            h.reverse()
         try:
-            roll = h[index]
-            return roll
+            roll = self.history[index]
         except IndexError:
-            logger.error("The dice roll_history index is out of range.")
-            return []
+            logger.error("Dice roll history index out of range.")
+            roll = []
+        return roll
 
-    def reroll(self, index=None, alg=None):
-        if index is None:
-            dice = self.last
-            index = -1
-        else:
-            dice = self.getRoll(index)
+    def historyAppend(self, dice):
+        self.history.append(dice)
+
+    def historyEdit(self, index, dice):
+        self.history[index] = dice
+
+    def historyClear(self):
+        self.history.clear()
+        self.sides.clear()
+
+    def reroll(self, index=-1, alg=lambda d: d < 2):
+        dice = self.getRoll(index)
         new_dice = []
+        history_offset = 0
         for die in dice:
-            if alg is None:
-                alg = lambda d: d < 2
             while alg(die):
                 die = self.roll(self.sides[index], 1)
                 die = die[0]
+                if die and index < 0:
+                    history_offset -= 1
             new_dice.append(die)
-        self.rollHistoryEdit(index, new_dice)
+        index = index + history_offset
+        self.historyEdit(index, new_dice)
         return new_dice
 
-    def roll(self, sides, total_dice):
+    def roll(self, sides, total_dice, modifier=0):
         self.sides.append(sides)
+        self.roll_mods.append(modifier)
         try:
-            dice = [random.randint(1, sides) for d in range(total_dice)]
+            dice = [self._r.randint(1, sides) for d in range(total_dice)]
             if dice:
-                self.rollHistoryAppend(dice)
-            return dice
+                self.historyAppend(dice)
+                dice = list(dice)
+                dice.append(modifier)
         except (ValueError, TypeError):
             logger.error("Dice roll failed due to invalid data.")
-            return []
+            dice = []
+        return dice
+
+    def total(self, index=-1):
+        try:
+            value = sum(self.history[index]) + self.roll_mods[index]
+        except IndexError:
+            logger.error("Roll history index out of range.")
+            value = 0
+        return value
