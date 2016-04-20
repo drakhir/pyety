@@ -1,22 +1,13 @@
 # -*- coding: utf-8 -*-
 
 """
-Location
+Pyety: Location Module
 
 Classes which allow object tracking across 2D or 3D space.
 """
 
-import logging
 from uuid import uuid4
 from os import linesep
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(name)s %(levelname)-8s %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
-logger = logging.getLogger(__name__)
-
 
 class Cell(object):
     """
@@ -26,7 +17,7 @@ class Cell(object):
     Hexagon/Hexagonal prism - Length of one side needed to calculate area.  Height needed to calculate volume.
     """
 
-    __slots__ = ['area', 'formula', 'height', 'icon', 'length', 'max_objs', 'measurements', 'shape', 'sides',
+    __slots__ = ['area', 'formula', 'height', 'icon', 'length','max_objs', 'measurements', 'shape', 'sides',
                  'volume', 'width']
 
     def __init__(self, shape, sides, max_objs=-1):
@@ -34,10 +25,10 @@ class Cell(object):
             self.shape = str(shape)
             self.sides = int(sides)
             self.max_objs = int(max_objs)
+            self.measurements = {}
             self.icon = ""
             self.formula = {}
-        except ValueError as err:
-            logger.error("Error initializing grid cell.")
+        except ValueError as err:  # Error initializing grid cell.
             raise ValueError(err)
 
     @property
@@ -67,14 +58,10 @@ class Cell(object):
             for m in self.formula[formula_type][0]:
                 kwargs[m] = self.measurements[m]
             value = self.formula[formula_type][1](**kwargs)
-        except (KeyError, NameError):
-            logger.warning("No formula to calculate %s has been defined." % formula_type)
-            value = None
-        except IndexError:
-            logger.error("Unable to calculate cell %s." % formula_type)
-            logger.warning("Required measurements are %s. Currently measurements %s are set."
-                         % (str(self.formula[formula_type][0]), str(tuple(self.measurements.keys()))))
-            value = None
+        except (KeyError, NameError):  # Missing formula to calculate necessary measurement.
+            raise
+        except IndexError:  # Unable to calculate cell measurements.
+            raise
         return value
 
     def setFormula(self, **kwargs):
@@ -91,7 +78,6 @@ class Cell(object):
 
     def setMeasurements(self, **kwargs):
         """Sets the size for each necessary measurement of the cell shape."""
-        self.measurements = {}
         try:
             for k, v in list(kwargs.items()):
                 self.measurements[k] = int(v)
@@ -99,9 +85,8 @@ class Cell(object):
                 return True
             else:
                 return False
-        except ValueError:
-            logger.error("Unable to set cell measurements.")
-            return False
+        except ValueError:  # Unable to set cell measurements.
+            raise
 
 
 class Grid(object):
@@ -111,11 +96,14 @@ class Grid(object):
                  'locations', 'objs', 'scope', 'size', 'surface', 'volume', 'uid', 'width']
 
     def __init__(self, cellobj=None):
-        self.uid = uuid4().hex
         self.cell = cellobj
+        self.content = []
         self.idmap = {}
-        self.objs = {}
         self.locations = {}
+        self.objs = {}
+        self.scope = ()
+        self.surface = []
+        self.uid = uuid4().hex
 
     def __call__(self):
         print(self)
@@ -130,9 +118,8 @@ class Grid(object):
         """The total area of the grid."""
         try:
             area = self.cell.area * self.size[0]
-        except (IndexError, TypeError):
-            logger.error("Unable to calculate total area of grid %s." % self.uid)
-            area = 0
+        except (IndexError, TypeError):  # Unable to calculate total area of grid.
+            area = None
         return area
 
     @property
@@ -143,8 +130,7 @@ class Grid(object):
                 return 3
             else:
                 return 2
-        except IndexError:
-            logger.error("Grid scope out of range.")
+        except IndexError:  # Grid scope out of range.
             return 0
 
     @property
@@ -171,8 +157,7 @@ class Grid(object):
         if self.layers > 1:
             try:
                 volume = self.cell.volume * self.size[0]
-            except (IndexError, TypeError):
-                logger.error("Unable to calculate total volume of grid %s." % self.uid)
+            except (IndexError, TypeError):  # Unable to calculate total volume of grid.
                 volume = 0
             return volume
         else:
@@ -197,11 +182,9 @@ class Grid(object):
             y = int(y)
             z = int(z)
             size = x * y
-        except ValueError as exc:
-            logger.error(exc)
+        except ValueError:  # Invalid operand.
             return False
-        if x < 1 or y < 1 or z < 1 or size < 1:
-            logger.error("Creation failed: Total grid size less than one.")
+        if x < 1 or y < 1 or z < 1 or size < 1:  # Creation failed: Total grid size less than one.
             return False
         else:
             if self.cell:
@@ -211,7 +194,6 @@ class Grid(object):
             self.scope = (x, y, z)
             self.surface = [[icon for i in range(size)] for o in range(z)]
             self.content = [[[] for i in range(size)] for o in range(z)]
-            logger.info("Successfully created a new grid with a size of %s by %s by %s." % (x, y, z))
             return True
 
     def getCell(self, location):
@@ -221,8 +203,7 @@ class Grid(object):
             bg = self.surface[index[0]][index[1]]
             fg = self.content[index[0]][index[1]]
             cell = (bg, fg)
-        except (IndexError, TypeError):
-            logger.error("Grid location is out of range.")
+        except (IndexError, TypeError):  # Grid location is out of range.
             cell = ()
         return cell
 
@@ -230,8 +211,7 @@ class Grid(object):
         """Get location of a game piece."""
         try:
             location = self.locations[name]
-        except KeyError:
-            logger.error("Object %s does not exist on grid." % name)
+        except KeyError:  # Object does not exist on grid.
             location = None
         return location
 
@@ -289,14 +269,11 @@ class Grid(object):
         index = self.index(location)
         try:  # Make sure grid index is valid before continuing.
             cell = self.content[index[0]][index[1]]
-        except (IndexError, TypeError):
-            logger.error("Grid location is out of range.")
+        except (IndexError, TypeError):  # Grid location is out of range.
+            raise
+        if obj in list(self.objs.values()):  # Game piece object already exists in grid.
             return False
-        if obj in list(self.objs.values()):
-            logger.error("Game piece object %s already exists in grid." % obj)
-            return False
-        elif name in self.locations:
-            logger.error("Game piece %s already exists." % name)
+        elif name in self.locations:  # Named game piece already exists.
             return False
         else:
             in_cell = len(cell)
@@ -306,7 +283,6 @@ class Grid(object):
                 elif self.cell.max_objs == 0 or self.cell.max_objs > in_cell:
                     pass
                 else:
-                    logger.error("Huh?")
                     return False
             else:
                 if in_cell == 0:
@@ -316,11 +292,8 @@ class Grid(object):
                     self.locations[name] = location
                     self.objs[name] = obj
                     result = name
-                else:
-                    logger.error("Unable to add object to grid. Each cell may only hold a single object.")
+                else:  # Each cell may only hold a single object.
                     return False
-        logger.info("Successfully added object %s at location %s, %s, %s." %
-                    (name, location[0], location[1], location[2]))
         return result
 
     def delete(self, name):
@@ -328,8 +301,7 @@ class Grid(object):
         try:
             location = self.locations[name]
             piece = self.objs[name]
-        except KeyError:
-            logger.error("Game piece %s does not exist." % name)
+        except KeyError:  # Game piece does not exist.
             return False
         try:
             index = self.index(location[0])
@@ -342,46 +314,38 @@ class Grid(object):
             del self.objs[name]
             del self.idmap[id(piece)]
             result = True
-        except (IndexError, TypeError):
-            logger.error("Grid location is out of range.")
+        except (IndexError, TypeError):  # Grid location is out of range.
             return False
-        logger.info("Successfully deleted game piece %s." % name)
         return result
 
     def index(self, location):
         """Calculates list index of a grid cell. Mainly meant for internal use."""
         if location[0] > self.scope[0] or location[1] > self.scope[1] or location[2] > self.scope[2]:
-            logger.error("Grid index out of range.")
+            # Grid index out of range.
             return ()
         try:
             index = (location[2] - 1, (location[0] - 1) * self.scope[1] + location[1] - 1)
-        except (IndexError, TypeError):
-            logger.error("Grid index out of range.")
+        except (IndexError, TypeError):  # Grid index out of range.
             index = ()
         return index
 
     def move(self, name, location):
         """Move an existing object to a new location on a grid."""
-        logger.info("Attempting to move object %s." % name)
         try:
             piece = self.objs[name]
-        except KeyError:
-            logger.error("Game piece %s does not exist." % name)
+        except KeyError:  # Game piece %s does not exist.
             return False
         new_index = self.index(location)
         try:  # Make sure grid index is valid before moving on.
             cell = self.content[new_index]
-        except (IndexError, TypeError):
-            logger.error("Grid location is out of range.")
+        except (IndexError, TypeError):  # Grid location is out of range.
             return False
         result = self.delete(name)
         if result:
             result = self.add(location, piece, name)
-        if result:
-            logger.info("Successfully moved object %s to location %s, %s on grid." % (name, location[0], location[1]))
+        if result:  # Moved object successfully.
             return result
-        else:
-            logger.error("Unable to move %s to location %s, %s." % (name, location[0], location[1]))
+        else:  # Unable to move object.
             return result
 
     def paint(self, location, piece):
@@ -392,8 +356,6 @@ class Grid(object):
         index = self.index(location)
         try:
             self.surface[index] = piece
-        except (IndexError, TypeError):
-            logger.error("Grid location is out of range.")
+        except (IndexError, TypeError):  # Grid location is out of range.
             return False
-        logger.info("Set a surface cell at location %s, %s." % (location[0], location[1]))
         return True

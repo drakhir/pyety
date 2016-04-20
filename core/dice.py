@@ -1,16 +1,11 @@
 # -*- coding: utf-8 -*-
 
+"""
+Pyety: Dice
+"""
+
 import random
-import logging
 from os import linesep
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(name)s %(levelname)-8s %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
-logger = logging.getLogger(__name__)
-
 
 class Dice(object):
     """Simulate a dice roll"""
@@ -19,7 +14,6 @@ class Dice(object):
         try:  # Initialize random seed
             self._r = random.SystemRandom()
         except NotImplementedError:  # Use the default randomization if no random number generator available
-            logger.warning("System random number generator unavailable. Using defaults.")
             pass
         # Initialize the dice roll history sequence
         self.history = []
@@ -37,8 +31,7 @@ class Dice(object):
 
     @property
     def rolls(self):
-        if not self.history:
-            logger.warning("The roll history is empty.")
+        if not self.history:  # The roll history is empty.
             all_rolls = []
         else:
             all_rolls = self.history
@@ -48,8 +41,7 @@ class Dice(object):
     def last(self):
         try:
             roll = self.history[-1]
-        except IndexError:
-            logger.warning("No last roll data found")
+        except IndexError:  # No last roll data found.
             roll = []
         return roll
 
@@ -65,8 +57,7 @@ class Dice(object):
     def getRoll(self, index):
         try:
             roll = self.history[index]
-        except IndexError:
-            logger.error("Dice roll history index out of range.")
+        except IndexError:  # Dice roll history index out of range.
             roll = []
         return roll
 
@@ -104,15 +95,13 @@ class Dice(object):
                 self.historyAppend(dice)
                 dice = list(dice)
                 dice.append(modifier)
-        except (ValueError, TypeError):
-            logger.error("Dice roll failed due to invalid data.")
+        except (ValueError, TypeError):  # Dice roll failed due to invalid data.
             dice = []
         return dice
 
     def total(self, index=-1):
         try:
             value = sum(self.history[index]) + self.roll_mods[index]
-        except IndexError:
-            logger.error("Roll history index out of range.")
+        except IndexError:  # Roll history index out of range.
             value = 0
         return value

@@ -2,22 +2,21 @@
 # -*- coding: utf-8 -*-
 
 """
-Pyety RPG engine main script
+Pyety: RPG Engine
+
+Main script
 """
 
-import sys
-import logging
+import os
 
-sys.path.append('/home/jason/src/projects/pyety')  # For testing purposes set local Python path.
+import core.util
+import ui.console as uic
 
-logging.basicConfig(
-                    level=logging.DEBUG,
-                    format="%(asctime)s %(name)s %(levelname)-8s %(message)s",
-                    datefmt="%Y-%m-%d %H:%M:%S",
-                    filename="./log/pyety.log"
-                    )
-logger = logging.getLogger("Pyety")
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+log_dir = base_dir + os.sep + "log"
+if not os.path.isdir(log_dir):
+    os.mkdir(log_dir)
+logger = core.util.get_logger("Pyety")
 
-from .ui import console
-
-console.Console().cmdloop()
+c = uic.Console()
+c.cmdloop()

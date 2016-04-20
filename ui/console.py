@@ -1,47 +1,38 @@
 # -*- coding: utf-8 -*-
 
 """
-Pyety RPG engine console
+Pyety: Engine Console
 """
 
-import logging
 import cmd
-
-log_name = "Pyety[" + __name__ + "]"
-
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(name)s %(levelname)-8s %(message)s",
-                    datefmt="%Y-%m-%d %H:%M:%S")
-logger = logging.getLogger(log_name)
-
+import os
 
 class Console(cmd.Cmd):
     """The Pyety console class implements a simple interactive interface."""
 
-    prompt = "[Pyety] "
+    def __init__(self, prompt="[Pyety]"):
+        super().__init__()
+        self.prompt = prompt + " "
 
-    def cmdloop(self, intro=""):
+    def cmdloop(self, intro=None):
         """Override base cmdloop to better customize intro text."""
-        logger.debug("Launching Pyety console.")
-        if not intro:
-            intro = "Welcome to Pyety!" + "\n"
+        if intro is None:
+            self.intro = "Welcome to Pyety!" + os.linesep
         super().cmdloop(intro)
 
-    def do_quit(self, save=None):
+    def do_quit(self, save=False):
         """Exits the console interface."""
-        logger.debug("Exiting application...")
         saved = None
         while saved is None:
-            if save == "y" or save == "Y" or save == "save":
+            if save == "y" or save == "Y":
                 saved = True
-                logger.info("Saving game.")
-            elif save == "n" or save == "N" or save == "now":
+            elif save == "n" or save == "N":
                 saved = False
-                logger.info("Exiting without saving.")
             else:
-                print("Do you wish to save your game? (y/n) ", end="")
+                print("Do you wish to save your game? (y/n)", end=" ")
                 save = input()
         return True
 
     def do_start(self, args):
         """Start a new game."""
-        logger.debug("Beginning a new game.")
+        pass
