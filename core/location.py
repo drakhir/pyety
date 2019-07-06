@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# pylint: disable=C0103,C0301
 
 """
 Pyety: Location Module
@@ -11,14 +11,16 @@ from os import linesep
 
 class Cell(object):
     """
-    The cell class creates a more complex cell with the ability to calculate many different properties on the fly.
+    The cell class creates a more complex cell with the ability to
+    calculate many different properties on the fly.
     Tested cell shapes include:
     Square/Cube - Length of one side is needed to calculate area and volume.
-    Hexagon/Hexagonal prism - Length of one side needed to calculate area.  Height needed to calculate volume.
+    Hexagon/Hexagonal prism - Length of one side needed to calculate area.
+    Height needed to calculate volume.
     """
 
-    __slots__ = ['area', 'formula', 'height', 'icon', 'length','max_objs', 'measurements', 'shape', 'sides',
-                 'volume', 'width']
+    __slots__ = ['area', 'formula', 'height', 'icon', 'length', 'max_objs', 'measurements',
+                 'shape', 'sides', 'volume', 'width']
 
     def __init__(self, shape, sides, max_objs=-1):
         try:
@@ -92,8 +94,9 @@ class Cell(object):
 class Grid(object):
     """Tracks the location of objects on a grid."""
 
-    __slots__ = ['area', 'cell', 'content', 'dimensions', 'height', 'idmap', 'layers', 'layer_size', 'length',
-                 'locations', 'objs', 'scope', 'size', 'surface', 'volume', 'uid', 'width']
+    __slots__ = ['area', 'cell', 'content', 'dimensions', 'height', 'idmap', 'layers',
+                 'layer_size', 'length', 'locations', 'objs', 'scope', 'size', 'surface',
+                 'volume', 'uid', 'width']
 
     def __init__(self, cellobj=None):
         self.cell = cellobj

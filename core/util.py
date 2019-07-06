@@ -11,10 +11,11 @@ WARNING = 2
 ERROR = 3
 CRITICAL = 4
 
-def get_logger(logger_name, loglevel=INFO, logfile='', logfmt='%(name)s - %(asctime)s - %(levelname)s - %(message)s'):
+def get_logger(logger_name, loglevel=INFO, logfile='',
+               logfmt='%(name)s - %(asctime)s - %(levelname)s - %(message)s'):
     """
-    Set up logging. Default loglevel is INFO.
-    Output is sent to stdout by default, or file of choice. Passing NoneType to logfile sets NullHandler.
+    Set up logging. Default loglevel is INFO. Output is sent to stdout by default,
+    or file of choice. Passing NoneType to logfile sets NullHandler.
     """
     logger = logging.getLogger(logger_name)
     if loglevel == DEBUG:
