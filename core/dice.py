@@ -74,27 +74,23 @@ class Dice(object):
     def reroll(self, index=-1, alg=lambda d: d < 2):
         dice = self.getRoll(index)
         new_dice = []
-        history_offset = 0
         for die in dice:
             while alg(die):
-                die = self.roll(self.sides[index], 1)
+                die = self.roll(self.sides[index], 1, append_to_hist=False)
                 die = die[0]
-                if die and index < 0:
-                    history_offset -= 1
             new_dice.append(die)
-        index = index + history_offset
         self.historyEdit(index, new_dice)
         return new_dice
 
-    def roll(self, sides, total_dice, modifier=0):
+    def roll(self, sides, total_dice, modifier=0, append_to_hist=True):
         self.sides.append(sides)
-        self.roll_mods.append(modifier)
         try:
             dice = [self._r.randint(1, sides) for d in range(total_dice)]
             if dice:
-                self.historyAppend(dice)
+                if append_to_hist:
+                    self.historyAppend(dice)
+                    self.roll_mods.append(modifier)
                 dice = list(dice)
-                dice.append(modifier)
         except (ValueError, TypeError):  # Dice roll failed due to invalid data.
             dice = []
         return dice
