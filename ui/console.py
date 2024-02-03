@@ -8,9 +8,10 @@ import os
 class Console(cmd.Cmd):
     """The Pyety console class implements a simple interactive interface."""
 
-    def __init__(self, prompt="[Pyety]"):
+    def __init__(self, prompt="[Pyety]", logger=None):
         super().__init__()
         self.prompt = prompt + " "
+        self.logger = logger
 
     def cmdloop(self, intro=None):
         """Override base cmdloop to better customize intro text."""

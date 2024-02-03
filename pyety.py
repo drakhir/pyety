@@ -25,7 +25,7 @@ def conf_logger(logger_name, log_dir=None):
 def run_console():
     """Run console UI"""
     log = conf_logger("pyety.console")
-    con = uic.Console(log)
+    con = uic.Console(logger=log)
     con.cmdloop()
 
 def run_gui():
